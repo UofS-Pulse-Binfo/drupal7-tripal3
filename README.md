@@ -9,13 +9,15 @@ This workspace has the following installed:
 - PostgreSQL 9.3.15
 - Drupal 7.55
 - Drush 8.1.12
+- PHP-daemon Library v2.0
+- Tripal 3.x Development branch
 
 ## Quickstart
 ### Initial Cloud9 Workspace setup.
 1. On your dashboard click "Create a new workspace."
 2. Enter workspace information
   - Provide a name and description for your workspace.
-  - Under "Clone from Git or Mercurial URL (optional)" enter "https://github.com/UofS-Pulse-Binfo/drupal7.git"
+  - Under "Clone from Git or Mercurial URL (optional)" enter "https://github.com/UofS-Pulse-Binfo/drupal7-tripal3.git"
   - Under "Choose a template" pick "Apache & PHP5"
   - Click "Create Workspace."
 3. Install Drush
