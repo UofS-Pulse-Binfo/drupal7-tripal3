@@ -36,8 +36,8 @@ sudo chmod a+w sites/default/settings.php
 echo "4. Install Drupal via Drush"
 drush site-install standard \
   --db-url="pgsql://web_admin:$PASSWORD@localhost/drupal7" \
-  --site-name="Drupal 7 Dev" \
-  --account-name=drupaladmin \
+  --site-name="Drupal 7, Tripal 3 Dev" \
+  --account-name=tripaladmin \
   --account-pass="$PASSWORD"
 
 # Set the site slogan to show build date.
@@ -60,6 +60,11 @@ echo "6. Clone Tripal 3.x"
 cd sites/all/modules
 [ -d tripal ] && sudo rm -r tripal
 git clone https://github.com/tripal/tripal.git --branch 7.x-3.x --single-branch
+# Update slogan to include tripal SHA at time of building.
+cd tripal
+SHA=$(git rev-parse --short HEAD)
+drush php-eval "variable_set('site_slogan','Built on '.date('YMd h:i').' ($SHA)');" 
+cd ../../../../
 echo ""
 
 # Enable Tripal
@@ -67,8 +72,17 @@ echo "7. Enable common Tripal modules."
 drush pm-enable tripal tripal_chado tripal_ds tripal_ws tripal_daemon
 echo ""
 
+# Install Chado v1.3
+echo "8. Install Chado v1.3 and prepare it for use with Tripal."
+echo "Install Chado v1.3"
+drush php-eval "module_load_include('inc', 'tripal_chado', 'includes/tripal_chado.install'); tripal_chado_install_chado('Install Chado v1.3');"
+# Prepare Chado for Tripal
+echo "Prepare Chado for use with Tripal."
+drush php-eval "module_load_include('inc', 'tripal_chado', 'includes/setup/tripal_chado.setup'); tripal_chado_prepare_chado();"
+echo ""
+
 # User Feedback.
 echo "Assuming there are no errors shown above, you have successfully re-installed Drupal."
 echo "Site URL: (See Apache Tab)"
-echo "Drupal Username: drupaladmin"
+echo "Drupal Username: tripaladmin"
 echo "Drupal Password: $PASSWORD"
