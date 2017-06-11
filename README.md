@@ -24,7 +24,11 @@ composer global require drush/drush:8.*
 sed -i '1i export PATH="$HOME/.composer/vendor/bin:$PATH"' $HOME/.bashrc
 source $HOME/.bashrc
 ```
-4. Create a Fresh Drupal Install (see below).
+4. Click "Run Project" above to start apache2
+5. Update sites/default/default.settings.php as follows:
+> Scroll down to the line: `# base_url = 'http://www.example.com';`, remove the crosshatch (#), and replace the URL with the following: `https://projectname-username.c9.io4` where you have replaced username with your own username and projectname with the name of your workspace.
+6. Install your Drupal site: `./create_fresh.sh`
+7. In a new tab, open the Site URL and sign in using the credentials listed.
 
 ### Create a Fresh Drupal install.
 1. Click "Run Project" above to start apache2
