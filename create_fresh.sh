@@ -34,7 +34,6 @@ sudo chmod a+w sites/default/settings.php
 
 # Next, install Drupal.
 echo "4. Install Drupal via Drush"
-echo "pgsql://web_admin:$PASSWORD@localhost/drupal7"
 drush site-install standard \
   --db-url="pgsql://web_admin:$PASSWORD@localhost/drupal7" \
   --site-name="Drupal 7 Dev" \
