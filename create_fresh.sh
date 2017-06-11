@@ -48,10 +48,18 @@ sudo chmod a-w sites/default/settings.php
 echo "Write permissions removed from sites/default/settings.php."
 echo ""
 
-# Finally, enable common module.
-echo "5. Enabling common modules."
+# Enable common module.
+echo "5. Enabling common modules and Tripal dependencies."
 drush pm-disable overlay
-drush pm-enable ctools views views_ui devel
+drush pm-enable ctools views views_ui devel redirect entity link date ds field_group field_group_table libraries
+drush pm-enable drushd
+echo ""
+
+# Get Tripal
+echo "6. Clone Tripal 3.x"
+cd sites/all/modules
+[ -d tripal ] && sudo rm -r tripal
+git clone https://github.com/tripal/tripal.git --branch 7.x-3.x --single-branch
 echo ""
 
 # User Feedback.
