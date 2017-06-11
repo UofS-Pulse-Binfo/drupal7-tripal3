@@ -41,7 +41,7 @@ drush site-install standard \
   --account-pass="$PASSWORD"
 
 # Set the site slogan to show build date.
-#drush php-eval "variable_set('site_slogan','Built on '.date('YMd h:i'));"
+drush php-eval "variable_set('site_slogan','Built on '.date('YMd h:i'));"
 
 # Re-protect the settings file.
 sudo chmod a-w sites/default/settings.php
@@ -60,6 +60,11 @@ echo "6. Clone Tripal 3.x"
 cd sites/all/modules
 [ -d tripal ] && sudo rm -r tripal
 git clone https://github.com/tripal/tripal.git --branch 7.x-3.x --single-branch
+echo ""
+
+# Enable Tripal
+echo "7. Enable common Tripal modules."
+drush pm-enable tripal tripal_chado tripal_ds tripal_ws tripal_daemon
 echo ""
 
 # User Feedback.
