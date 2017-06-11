@@ -1,0 +1,2 @@
+cd ..
+php Examples/PrimeNumbers/run.php -p ./Examples/PrimeNumbers/pid $1

@@ -1,0 +1,2 @@
+cd ..
+php Examples/Tasks/run.php -p ./Examples/Tasks/pid $1
