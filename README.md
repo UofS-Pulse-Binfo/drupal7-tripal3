@@ -11,6 +11,21 @@ This workspace has the following installed:
 - Drush 8.1.12
 
 ## Quickstart
+### Initial Cloud9 Workspace setup.
+1. On your dashboard click "Create a new workspace."
+2. Enter workspace information
+  - Provide a name and description for your workspace.
+  - Under "Clone from Git or Mercurial URL (optional)" enter "https://github.com/UofS-Pulse-Binfo/drupal7.git"
+  - Under "Choose a template" pick "Apache & PHP5"
+  - Click "Create Workspace."
+3. Install Drush
+```
+composer global require drush/drush:8.*
+sed -i '1i export PATH="$HOME/.composer/vendor/bin:$PATH"' $HOME/.bashrc
+source $HOME/.bashrc
+```
+4. Create a Fresh Drupal Install (see below).
+
 ### Create a Fresh Drupal install.
 1. Click "Run Project" above to start apache2
 2. Install your Drupal site: `./create_fresh.sh`
