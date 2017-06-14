@@ -112,44 +112,8 @@ function drush_drushd_daemon($action, $daemon_machine_name = 'drush_daemon') {
  */
 function drush_daemon_api_start_daemon($daemon_machine_name) {
 
-  // Define a BASE_PATH to be our Drupal Sites Files directory.
-  // Unfortunately this is needed by the PHP-Daemon Library. Since it is only
-  // defined in this function which should only ever be called from the command
-  // line we're crossing our fingers (and testing of course ;-) ) that no
-  // collision occurs.
-  define("BASE_PATH", variable_get('file_public_path', conf_path() . '/files'));
-
-  // Determine which Daemon should be run.
-  // This allows other modules to plug-in to this functionality without having
-  // to write their own run.php and drush functions.
-  $daemon_info = drushd_get_daemon_info($daemon_machine_name, TRUE);
-  if (!$daemon_info) {
-    return drush_set_error(dt('Daemon not registered. Please implement hook_daemon_api_info() in your module.'));
-  }
-  $daemon_class_file = $daemon_info['class_filepath'];
-  $daemon_class = $daemon_info['class'];
-
-  // First check to see if the Daemon is already running.
-  // Note: This check loads the classes needed to instantiate the daemon below.
-  if (drushd_is_daemon_running($daemon_machine_name)) {
-    return drush_set_error(dt("\nThe Daemon is already running..."));
-  }
-
-  // Instantiate our daemon.
-  // For legacy support we still try to call setFilename, but actually it's removed.
-  if (method_exists($daemon_class, 'setFilename')) {
-    call_user_func(array($daemon_class, 'setFilename'), __FILE__);
-  }
-  $daemon = call_user_func(array($daemon_class, 'getInstance'));
-
-  // We need to keep track of all the daemons run so that if the module
-  // is uninstalled we know which daemons to stop.
-  $daemon_list = variable_get('drushd_daemon_list', NULL);
-  $daemon_list = ($daemon_list !== NULL) ? unserialize($daemon_list) : array();
-  $daemon_list[$daemon_machine_name] = TRUE;
-  variable_set('drushd_daemon_list', serialize($daemon_list));
-
-  drush_log(dt("\nStarting @daemon-name", array('@daemon-name' => $daemon_info['name'])), 'ok');
+  // First, instantiate the daemon.
+  $daemon = drushd_instantiate_daemon($daemon_machine_name);
 
   // We always start our daemons in daemon-mode. Thus when the daemon is first
   // started from drush, we need to fork the process. However, we don't want
@@ -183,12 +147,13 @@ function drush_daemon_api_start_daemon($daemon_machine_name) {
  */
 function drush_daemon_api_stop_daemon($daemon_machine_name) {
 
-  $lock_file = drushd_is_daemon_running($daemon_machine_name);
+  $lock_file = drushd_get_daemon_lock_file($daemon_machine_name);
   if (file_exists($lock_file)) {
     $pid = shell_exec("cat $lock_file");
 
     if ($pid) {
       shell_exec("kill $pid");
+      if (file_exists($lock_file)) { shell_exec("rm $lock_file  2> /dev/null"); }
       drush_log(dt('Stopped the Daemon'), 'ok');
     }
     else {
@@ -310,6 +275,14 @@ function drush_daemon_api_show_daemon_status($daemon_machine_name) {
       // Check for boolean FALSE to print nicely.
       elseif ($value === FALSE) {
         drush_print("\t" . check_plain($name) . ": FALSE");
+      }
+      elseif (is_array($value)) {
+        if (empty($value)) {
+          drush_print("\t" . check_plain($name) . ": None.");
+        }
+        else {
+          drush_print("\t" . check_plain($name) . ": " . implode(',', $value));
+        }
       }
       // Otherwise just assume it's a string and print as is.
       else {

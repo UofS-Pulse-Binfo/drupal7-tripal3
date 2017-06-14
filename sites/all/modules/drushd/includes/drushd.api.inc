@@ -127,14 +127,97 @@ function drushd_is_daemon_running($daemon_machine_name, $daemon_info = NULL) {
   // Retrieve the path to the lock file.
   $lock_file = call_user_func(array($daemon_info['class'], 'getLockFile'), $daemon_info['class'], $daemon_info['files_dir']);
 
-  // If it exists then the daemon is running.
+  // If it exists then the daemon is likely running.
   if (file_exists($lock_file)) {
-    return $lock_file;
+
+    // Check the PID is still active.
+    // posix_kill() with the 0 kill signal will return true if the process is running, false otherwise.
+    $pid = `cat $lock_file`;
+    if ($pid AND posix_kill($pid, 0)) {
+      return $lock_file;
+    }
+    // Otherwise, it is not.
+    else {
+      return FALSE;
+    }
   }
   // Otherwise, it is not.
   else {
     return FALSE;
   }
+}
+
+/**
+ * Checks to see whether the specified daemon was murdered.
+ *
+ * NOTE: We consider the daemon murdered if it is no longer running but was not
+ * shut down properly and thus didn't remove it's lock file.
+ *
+ * @param $daemon_machine_name
+ *   The machine name of the daemon you would like to check as specified in hook_daemon_api_info().
+ * @return
+ *   TRUE if the daemon is dead and FALSE otherwise.
+ */
+function drushd_is_daemon_dead($daemon_machine_name, $daemon_info = NULL) {
+
+  // Retrieve information about the daemon if it wasn't given to us.
+  if ($daemon_info === NULL) {
+    $daemon_info = drushd_get_daemon_info($daemon_machine_name);
+    if (!$daemon_info) return FALSE;
+  }
+
+  // Load the necessary classes.
+  $success = drushd_load_daemon_classes($daemon_machine_name, $daemon_info);
+  if (!$success) return FALSE;
+
+  // Retrieve the path to the lock file.
+  $lock_file = call_user_func(array($daemon_info['class'], 'getLockFile'), $daemon_info['class'], $daemon_info['files_dir']);
+
+  // If it exists then the daemon is either running or dead.
+  if (file_exists($lock_file)) {
+
+    // Check the PID is still active.
+    // posix_kill() with the 0 kill signal will return true if the process is running, false otherwise.
+    $pid = `cat $lock_file`;
+    if ($pid AND posix_kill($pid, 0)) {
+      // Thus the process is still running...
+      return FALSE;
+    }
+    // Otherwise, it was killed before it could clean up after itself.
+    else {
+      return TRUE;
+    }
+  }
+  // Otherwise, it was stopped by an administrator.
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Retrieves the lock file for the specified daemon.
+ *
+ * @param $daemon_machine_name
+ *   The machine name of the daemon you would like to check as specified in hook_daemon_api_info().
+ * @return
+ *   The lock file for the specified daemon.
+ */
+function drushd_get_daemon_lock_file($daemon_machine_name, $daemon_info = NULL) {
+
+  // Retrieve information about the daemon if it wasn't given to us.
+  if ($daemon_info === NULL) {
+    $daemon_info = drushd_get_daemon_info($daemon_machine_name);
+    if (!$daemon_info) return FALSE;
+  }
+
+  // Load the necessary classes.
+  $success = drushd_load_daemon_classes($daemon_machine_name, $daemon_info);
+  if (!$success) return FALSE;
+
+  // Retrieve the path to the lock file.
+  $lock_file = call_user_func(array($daemon_info['class'], 'getLockFile'), $daemon_info['class'], $daemon_info['files_dir']);
+
+  return $lock_file;
 }
 
 /**
@@ -179,7 +262,7 @@ function drushd_notify_admin_when_daemon_down($daemon_machine_name = 'drush_daem
   $admin_user = user_load(1);
 
   // If the daemon is not running...
-  if (!drushd_is_daemon_running($daemon_machine_name)) {
+  if (drushd_is_daemon_dead($daemon_machine_name)) {
 
     // Determine the last known status for the daemon.
     $status_file = drushd_get_daemon_status_file($daemon_machine_name);
@@ -201,10 +284,6 @@ function drushd_notify_admin_when_daemon_down($daemon_machine_name = 'drush_daem
           $status_report .= check_plain($name) . ": " . check_plain($value) . "\n";
         }
       }
-    }
-    // We do not need to inform anyone of the death of someone who never lived.
-    else {
-      return '';
     }
 
     // Set who this email is being sent from (ie: from KnowPulse)
@@ -229,3 +308,57 @@ function drushd_notify_admin_when_daemon_down($daemon_machine_name = 'drush_daem
   return FALSE;
 }
 
+/**
+ * Instantiate the specified Daemon.
+ *
+ * NOTE: Must be run via Drush!
+ *
+ * @param string $daemon_machine_name
+ *   The machine name of the daemon (as specified in hook_daemon_api_info() )
+ *   to be started.
+ * @param array $options
+ *   An array of options to pass to the daemon class.
+ */
+function drushd_instantiate_daemon($daemon_machine_name, $options = array()) {
+
+  // Define a BASE_PATH to be our Drupal Sites Files directory.
+  // Unfortunately this is needed by the PHP-Daemon Library. Since it is only
+  // defined in this function which should only ever be called from the command
+  // line we're crossing our fingers (and testing of course ;-) ) that no
+  // collision occurs.
+  define("BASE_PATH", variable_get('file_public_path', conf_path() . '/files'));
+
+  // Determine which Daemon should be run.
+  // This allows other modules to plug-in to this functionality without having
+  // to write their own run.php and drush functions.
+  $daemon_info = drushd_get_daemon_info($daemon_machine_name, TRUE);
+  if (!$daemon_info) {
+    return drush_set_error(dt('Daemon not registered. Please implement hook_daemon_api_info() in your module.'));
+  }
+  $daemon_class_file = $daemon_info['class_filepath'];
+  $daemon_class = $daemon_info['class'];
+
+  // First check to see if the Daemon is already running.
+  // Note: This check loads the classes needed to instantiate the daemon below.
+  if (drushd_is_daemon_running($daemon_machine_name)) {
+    return drush_set_error(dt("\nThe Daemon is already running..."));
+  }
+
+  // Instantiate our daemon.
+  // For legacy support we still try to call setFilename, but actually it's removed.
+  if (method_exists($daemon_class, 'setFilename')) {
+    call_user_func(array($daemon_class, 'setFilename'), __FILE__);
+  }
+  $daemon = call_user_func(array($daemon_class, 'getInstance'));
+
+  // We need to keep track of all the daemons run so that if the module
+  // is uninstalled we know which daemons to stop.
+  $daemon_list = variable_get('drushd_daemon_list', NULL);
+  $daemon_list = ($daemon_list !== NULL) ? unserialize($daemon_list) : array();
+  $daemon_list[$daemon_machine_name] = TRUE;
+  variable_set('drushd_daemon_list', serialize($daemon_list));
+
+  drush_log(dt("\nStarting @daemon-name", array('@daemon-name' => $daemon_info['name'])), 'ok');
+
+  return $daemon;
+}

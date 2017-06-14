@@ -34,7 +34,7 @@ sudo chmod a+w sites/default/settings.php
 
 # Next, install Drupal.
 echo "4. Install Drupal via Drush"
-drush site-install standard \
+drush site-install standard --yes \
   --db-url="pgsql://web_admin:$PASSWORD@localhost/drupal7" \
   --site-name="Drupal 7, Tripal 3 Dev" \
   --account-name=tripaladmin \
@@ -50,16 +50,19 @@ echo ""
 
 # Enable common module.
 echo "5. Enabling common modules and Tripal dependencies."
-drush pm-disable overlay
-drush pm-enable ctools views views_ui devel redirect entity link date ds field_group field_group_table libraries
-drush pm-enable drushd
+drush pm-disable overlay --yes
+drush pm-enable ctools views views_ui devel devel_debug_log redirect entity link date ds field_group field_group_table libraries --yes
+drush pm-enable drushd --yes
 echo ""
 
 # Get Tripal
 echo "6. Clone Tripal 3.x"
 cd sites/all/modules
-[ -d tripal ] && sudo rm -r tripal
-git clone https://github.com/tripal/tripal.git --branch 7.x-3.x --single-branch
+read -p "Would you like to clone the most recent dev version of Tripal 3.x? (y/n): " yn
+if [ "$yn" = "y" ]; then
+  [ -d tripal ] && sudo rm -r tripal
+  git clone https://github.com/tripal/tripal.git --branch 7.x-3.x --single-branch
+fi
 # Update slogan to include tripal SHA at time of building.
 cd tripal
 SHA=$(git rev-parse --short HEAD)
@@ -69,7 +72,7 @@ echo ""
 
 # Enable Tripal
 echo "7. Enable common Tripal modules."
-drush pm-enable tripal tripal_chado tripal_ds tripal_ws tripal_daemon
+drush pm-enable tripal tripal_chado tripal_ds tripal_ws tripal_daemon --yes
 echo ""
 
 # Install Chado v1.3

@@ -98,7 +98,7 @@ function drushd_daemon_api_info() {
 function drushd_cron() {
 
   // Defaults to sending one email every 24 hrs.
-  $interval = 60 * 60 * 24;
+  $default_interval = 60 * 60 * 24;
 
   // Get a list of daemons.
   $daemons = module_invoke_all('daemon_api_info');
@@ -111,9 +111,15 @@ function drushd_cron() {
     $daemon_machine_name = $info['machine_name'];
     $next_notification = 'drushd_next_notification_' . $daemon_machine_name;
 
+    // Allow the interval to be set per daemon.
+    // Furthermore, if the interval is set to FALSE then the administrator will
+    // never be emailed.
+    $interval_var = 'drushd_email_inteval_' . $daemon_machine_name;
+    $interval = variable_get($interval_var, $default_interval);
+
     // We usually don't want to act every time cron runs (which could be every
     // minute) so keep a time for the next run in a variable.
-    if (time() >= variable_get($next_notification, 0)) {
+    if (time() >= variable_get($next_notification, 0) AND ($interval !== FALSE)) {
 
       // Notify the admin user if the daemon has perished.
       $notified = drushd_notify_admin_when_daemon_down($daemon_machine_name);
