@@ -72,7 +72,7 @@ echo ""
 
 # Enable Tripal
 echo "7. Enable common Tripal modules."
-drush pm-enable tripal tripal_chado tripal_ds tripal_ws tripal_daemon --yes
+drush pm-enable tripal tripal_chado tripal_ds tripal_ws tripal_daemon generate_trpdata --yes
 echo ""
 
 # Install Chado v1.3
