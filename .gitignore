@@ -1,4 +1,5 @@
 # Ignore configuration files that may contain sensitive information.
+sites/*/default.settings.php
 sites/*/settings.php
 
 # Ignore paths that contain generated content.
@@ -7,3 +8,5 @@ sites/*/files
 sites/*/private
 sites/all/modules/tripal
 
+# Ignore Cloud9 files.
+.editorconfig
