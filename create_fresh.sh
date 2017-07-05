@@ -88,4 +88,5 @@ echo ""
 echo "Assuming there are no errors shown above, you have successfully re-installed Drupal."
 echo "Site URL: (See Apache Tab)"
 echo "Drupal Username: tripaladmin"
-echo "Drupal Password: $PASSWORD"
+echo "Drupal Password: $PASSWORD (saved in .passwd file for reference)."
+echo "$PASSWORD" > .passwd

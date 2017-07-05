@@ -10,3 +10,4 @@ sites/all/modules/tripal
 
 # Ignore Cloud9 files.
 .editorconfig
+.passwd
