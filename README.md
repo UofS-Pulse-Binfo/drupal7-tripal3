@@ -1,7 +1,11 @@
+# DEPRECATED: Cloud9 is now end-of-life
 
+Cloud9 is now only available on amazon cloud. It is no longer easy to use the free service and as such, our development team is no longer using it.
+
+### drupal7 tripal3
 This workspace was setup for Drupal 7 development. I have included all the software I regularily use during development; however, keep in mind this stack may not suit your development workflow. This Drupal7 workspace was setup with PostgreSQL rather then MySQL to aid in development of Tripal.
 
-## Stack
+#### Stack
 This workspace has the following installed:
 - Ubuntu 14.04.5 LTS (trusty)
 - Apache 2.4.7
@@ -12,8 +16,8 @@ This workspace has the following installed:
 - PHP-daemon Library v2.0
 - Tripal 3.x Development branch
 
-## Quickstart
-### Initial Cloud9 Workspace setup.
+#### Quickstart
+##### Initial Cloud9 Workspace setup.
 1. On your dashboard click "Create a new workspace."
 2. Enter workspace information
   - Provide a name and description for your workspace.
@@ -32,28 +36,28 @@ source $HOME/.bashrc
 6. Install your Drupal site: `./create_fresh.sh`
 7. In a new tab, open the Site URL and sign in using the credentials listed.
 
-### Create a Fresh Drupal install.
+##### Create a Fresh Drupal install.
 1. Click "Run Project" above to start apache2
 2. Install your Drupal site: `./create_fresh.sh`
 3. In a new tab, open the Site URL and sign in using the credentials listed.
 
-### Shutdown for the day.
+##### Shutdown for the day.
 The follow commands will shut down your site for the day. **You're local files and database will be saved.**
 1. Make sure all your changes have been committed (if appropriate) and pushed.
 2. Stop PostgreSQL: `sudo service postgresql stop`
 3. Stop Apache: Click "Stop" above.
 
-### Restart existing site.
+##### Restart existing site.
 1. Start Apache: Click "Run Project" above.
 2. Start PostgreSQL: `sudo service postgresql start`
 3. Open your site as specified in the "Apache" tab.
 
-### Useful locations
+##### Useful locations
 - Apache Logs: ~/lib/apache2/log
 
-## Troubleshooting
+#### Troubleshooting
 
-### Drush is not installed.
+##### Drush is not installed.
 Setting up Drush is easy; simply execute the following commands:
 ```
 composer global require drush/drush:8.*
@@ -61,7 +65,7 @@ sed -i '1i export PATH="$HOME/.composer/vendor/bin:$PATH"' $HOME/.bashrc
 source $HOME/.bashrc
 ```
 
-### Your site is not displaying properly (white background with minimal styling).
+##### Your site is not displaying properly (white background with minimal styling).
 This is due to Drupal trying to load certain stylesheets over HTTP and the page is loaded with HTTPS. To fix this by enabling SSL, go to the Terminal, and execute the following:
 
 ```
